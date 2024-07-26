@@ -1,6 +1,6 @@
 {
     "name": "@ptolemy2002/react-proxy-context",
-    "version": "0.0.0",
+    "version": "1.0.0",
     "main": "index.js",
     "files": [
         "index.js"
@@ -21,10 +21,10 @@
     },
     "repository": {
         "type": "git",
-        "url": "www.github.com",
+        "url": "https://github.com/Ptolemy2002/react-proxy-context",
         "directory": "lib"
     },
-    "description": "Example of a React library",
+    "description": "React Context with Support for Mutation with Proxies",
     "license": "ISC",
     "peerDependencies": {
         "@types/react": "^18.3.3",
