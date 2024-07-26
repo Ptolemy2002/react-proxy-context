@@ -1,5 +1,5 @@
 # React Proxy Context
-This library is a solution for React that uses Javascript Proxies to allow React context consumers to listen to mutations as well as reassignments. Another benefit is that you can listen to the mutation of only specific properties. I find that many consider this style more intuitive to work with, though it is considered bad practice by others.
+This library is a solution for React that uses Javascript Proxies to allow React context consumers to listen to mutations as well as reassignments. Another benefit is that you can listen to the mutation of only specific properties. I find that many consider this style more intuitive to work with, though it is considered bad practice by others. A limitation is that it is only able to track direct mutations, not mutations that occur in nested arrays or objects, so those will still require recreation and reassignment.
 
 The functions are not exported as default, so you can import them in one of the following ways:
 ```
