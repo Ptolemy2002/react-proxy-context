@@ -4,9 +4,9 @@ This library is a solution for React that uses Javascript Proxies to allow React
 The functions are not exported as default, so you can import them in one of the following ways:
 ```
 // ES6
-import { functionName } from '@ptolemy2002/react-utils';
+import { functionName } from '@ptolemy2002/react-proxy-context';
 // CommonJS
-const { functionName } = require('@ptolemy2002/react-utils');
+const { functionName } = require('@ptolemy2002/react-proxy-context');
 ```
 
 ## Functions
