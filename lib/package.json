@@ -1,6 +1,6 @@
 {
     "name": "@ptolemy2002/react-proxy-context",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "main": "index.js",
     "files": [
         "index.js"
