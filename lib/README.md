@@ -60,12 +60,6 @@ These should be installed in order to use the library, as npm does not automatic
 - @types/react-dom: ^18.3.0
 - react: ^18.3.1
 - react-dom: ^18.3.1
-- @types/is-callable: ^1.1.2
-- is-callable: ^1.2.7
-- nanoid: ^5.0.7
-- @ptolemy2002/react-mount-effects: ^1.1.4
-- @ptolemy2002/react-force-rerender: ^1.0.4
-- @ptolemy2002/js-utils: ^1.0.3
 
 ## Commands
 The following commands exist in the project:
