@@ -65,6 +65,7 @@ function Consumer({consumerKey}) {
         },
         consumerKey.includes("1")
     );
+    console.log("Consumer render");
 
     if (consumerKey === "") return <p>Not listening to AppContext</p>;
     return (
