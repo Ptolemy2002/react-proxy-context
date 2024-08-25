@@ -33,7 +33,7 @@ A component that provides context of the specified class to its children using p
 #### Props
 - `contextClass` (Object): The class of the context to provide. This is the class that was created using `createProxyContext`.
 - `value` (Object): The value of the context. This is what is reported when the context is not provided.
-- `onChange` (Function): A function that is called whenever the context is changed. The first parameter is the property that was changed (null if it was reassignment), the second parameter is the current value of the context, and the third parameter is the previous value of the context. This is useful for listening to changes in the provider's parent component.
+- `onChange` (Function): A function that is called whenever the context is changed. The first parameter is the property that was changed (null if it was reassignment), the second parameter is the current value of the property, and the third parameter is the previous value of the property. This is useful for listening to changes in the provider's parent component.
 - `proxyRef` (Object): A ref object that is assigned the proxy object of the context. This is useful for accessing the proxy object directly by the provider's parent component.
 
 ## Hooks
@@ -45,6 +45,7 @@ A hook that uses the context provided by the `ProxyContextProvider` component. T
 #### Parameters
 - `contextClass` (Object): The class of the context to use. This is the class that was created using `createProxyContext`.
 - `deps` (Array): An array of dependencies to listen to. If any of these properties on the context change, the hook will re-render. If this is falsy, any mutation will trigger a re-render. You can also specify a function that returns a boolean to determine whether to re-render (provided with the same arguments as `onChange` would be and a 4th argument that is the current value of the context).
+- `onChange` (Function): A function that is called whenever the context is changed. The first parameter is the property that was changed (null if it was reassignment), the second parameter is the current value of the property, and the third parameter is the previous value of the property. This is useful for listening to changes in the provider's parent component.
 - `listenReinit` (Boolean): Whether to listen to full reassignments of the context and re-render when they occur. Default is `true`.
 
 #### Returns
