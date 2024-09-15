@@ -1,10 +1,11 @@
 import { createProxyContext, ProxyContextProvider, useProxyContext } from "@ptolemy2002/react-proxy-context";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const AppContext = createProxyContext(undefined, "AppContext");
 
 function App() {
     const [consumerKey, setConsumerKey] = useState("abc1");
+    const proxyRef = useRef();
 
     function setConsumerKeyElement(char, on) {
         if (on && !consumerKey.includes(char)) {
@@ -27,6 +28,8 @@ function App() {
                 onChange={(prop, curr, prev) => {
                     console.log("App onChange:", prop, curr, prev);
                 }}
+
+                proxyRef={proxyRef}
             >
                 {/* When the key changes, react will forcefully remount the component. This is necessart to reinitialize the useProxyContext hook. */}
                 <Consumer key={consumerKey} consumerKey={consumerKey} />
