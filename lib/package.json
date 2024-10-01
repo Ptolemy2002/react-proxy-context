@@ -6,7 +6,7 @@
         "index.js"
     ],
     "scripts": {
-        "build": "esbuild src/index.js --bundle --format=cjs --outfile=index.js --loader:.js=jsx --external:react --external:react-dom",
+        "build": "esbuild src/index.js --bundle --format=cjs --outfile=index.js --loader:.js=jsx --external:react --external:react-dom --external:@types/react --external:@types/react-dom",
         "postinstall": "npx typesync",
         "uninstall": "bash ./scripts/uninstall.sh",
         "reinstall": "bash ./scripts/reinstall.sh",
@@ -43,6 +43,6 @@
     },
     "dependencies": {
         "@ptolemy2002/react-hook-result": "^1.0.2",
-        "@ptolemy2002/react-utils": "^1.1.0"
+        "@ptolemy2002/react-utils": "^2.0.0"
     }
 }

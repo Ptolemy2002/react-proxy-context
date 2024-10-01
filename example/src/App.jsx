@@ -30,6 +30,7 @@ function App() {
                 }}
 
                 proxyRef={proxyRef}
+                renderDeps={[consumerKey]}
             >
                 {/* When the key changes, react will forcefully remount the component. This is necessart to reinitialize the useProxyContext hook. */}
                 <Consumer key={consumerKey} consumerKey={consumerKey} />
