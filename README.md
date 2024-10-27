@@ -51,16 +51,15 @@ A hook that uses the context provided by the `ProxyContextProvider` component. T
 #### Returns
 Array - An array with the first element being the current value of the context and the second element being a setter function to reassign the context.
 
-## Meta
-This is a React Library Created by Ptolemy2002's [cra-template-react-library](https://www.npmjs.com/package/@ptolemy2002/cra-template-react-library) template in combination with [create-react-app](https://www.npmjs.com/package/create-react-app). It contains methods of building and publishing your library to npm.
-For now, the library makes use of React 18 and does not use TypeScript.
-
 ## Peer Dependencies
 These should be installed in order to use the library, as npm does not automatically add peer dependencies to your project.
-- @types/react: ^18.3.3
-- @types/react-dom: ^18.3.0
-- react: ^18.3.1
-- react-dom: ^18.3.1
+- `react^18.3.1`
+- `react-dom^18.3.1`
+- `@ptolemy2002/js-utils^3.0.2`
+- `@ptolemy2002/react-utils^3.0.0`
+- `@ptolemy2002/react-force-rerender^2.0.0`
+- `@ptolemy2002/react-hook-result^2.1.1`
+- `@ptolemy2002/react-mount-effects^2.0.0`
 
 ## Commands
 The following commands exist in the project:

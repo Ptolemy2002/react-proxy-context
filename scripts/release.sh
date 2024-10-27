@@ -13,8 +13,11 @@ else
     echo "No bump type provided. Will release with the current version"
 fi
 
+echo -n "Enter the OTP for the npm 2FA: "
+read otp
+
 bash scripts/build.sh
 
 echo "Publishing the package"
-npm publish --access public
+npm publish --access public --otp $otp
 echo "Finished publishing the package"

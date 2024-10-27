@@ -1,13 +1,20 @@
-import { createProxyContext, ProxyContextProvider, useProxyContext } from "@ptolemy2002/react-proxy-context";
+import { createProxyContext, createProxyContextProvider, useProxyContext } from "@ptolemy2002/react-proxy-context";
 import { useState, useRef } from "react";
 
-const AppContext = createProxyContext(undefined, "AppContext");
+type AppContextType = {
+    a: number;
+    b: number;
+    c: number;
+};
+const AppContext = createProxyContext<AppContextType>("AppContext");
+const AppContextProvider = createProxyContextProvider(AppContext);
 
+type ConsumerKeyChar = "a" | "b" | "c" | "1";
 function App() {
     const [consumerKey, setConsumerKey] = useState("abc1");
-    const proxyRef = useRef();
+    const proxyRef = useRef<AppContextType>({a: 1, b: 2, c: 3});
 
-    function setConsumerKeyElement(char, on) {
+    function setConsumerKeyElement(char: ConsumerKeyChar, on: boolean) {
         if (on && !consumerKey.includes(char)) {
             setConsumerKey(consumerKey + char);
         } else if (!on && consumerKey.includes(char)) {
@@ -17,16 +24,19 @@ function App() {
 
     return (
         <div className="App p-3">
-            <ProxyContextProvider
-                contextClass={AppContext}
+            <AppContextProvider
                 value={{
                     a: 1,
                     b: 2,
                     c: 3
                 }}
 
-                onChange={(prop, curr, prev) => {
-                    console.log("App onChange:", prop, curr, prev);
+                onChangeProp={(prop, curr, prev) => {
+                    console.log("App onChangeProp:", prop, curr, prev);
+                }}
+
+                onChangeReinit={(curr, prev) => {
+                    console.log("App onChangeReinit:", curr, prev);
                 }}
 
                 proxyRef={proxyRef}
@@ -56,16 +66,23 @@ function App() {
                 <p>
                     Look into the console to see exactly when the onChange events are triggered and the arguments they receive.
                 </p>
-            </ProxyContextProvider>
+            </AppContextProvider>
         </div>
     );
 }
 
-function Consumer({consumerKey}) {
+function Consumer({consumerKey}: {consumerKey: string}) {
     const [{a, b, c}] = useProxyContext(AppContext, 
-        [consumerKey.includes("a") && "a", consumerKey.includes("b") && "b", consumerKey.includes("c") && "c"],
+        [
+          consumerKey.includes("a") && "a",
+          consumerKey.includes("b") && "b",
+          consumerKey.includes("c") && "c"
+        ],
         (prop, curr, prev) => {
-            console.log("Consumer onChange:", prop, curr, prev);
+            console.log("Consumer onChangeProp:", prop, curr, prev);
+        },
+        (curr, prev) => {
+            console.log("Consumer onChangeReinit:", curr, prev);
         },
         consumerKey.includes("1")
     );
