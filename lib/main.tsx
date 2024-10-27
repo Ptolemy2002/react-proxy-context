@@ -27,7 +27,7 @@ export type ProxyContextValue<T> = {
     subscribe: (
         propCallback: OnChangePropCallback<T>,
         reinitCallback: OnChangeReinitCallback<T>,
-        deps: Dependency<T>[]
+        deps: Dependency<T>[] | null
     ) => string;
     unsubscribe: (id: string) => void;
 };
@@ -69,7 +69,7 @@ export function createProxyContextProvider<T extends object>(
             {
                 [key: string]: {
                     id: string;
-                    deps: Dependency<T>[];
+                    deps: Dependency<T>[] | null;
                     propCallback: OnChangePropCallback<T>;
                     reinitCallback: OnChangeReinitCallback<T>;
                 };
@@ -85,7 +85,7 @@ export function createProxyContextProvider<T extends object>(
         const subscribe = useCallback((
             propCallback: OnChangePropCallback<T>,
             reinitCallback: OnChangeReinitCallback<T>,
-            deps: Dependency<T>[]
+            deps: Dependency<T>[] | null
         ) => {
             const id = nanoid();
 
@@ -184,7 +184,7 @@ export type UseProxyContextResult<T> = HookResultData<{
 
 export function useProxyContext<T>(
     contextClass: ContextWithName<ProxyContextValue<T> | undefined>,
-    deps: Dependency<T>[] = [],
+    deps: Dependency<T>[] | null = [],
     onChangeProp?: OnChangePropCallback<T>,
     onChangeReinit?: OnChangeReinitCallback<T>,
     listenReinit = true
@@ -207,7 +207,8 @@ export function useProxyContext<T>(
                 if (listenReinit) forceRerender();
                 if (isCallable(onChangeReinit)) onChangeReinit(current, prev);
             },
-            deps);
+            deps
+        );
     });
 
     useUnmountEffect(() => {
