@@ -3,7 +3,6 @@ import { nanoid } from "nanoid";
 import isCallable from "is-callable";
 import useForceRerender from "@ptolemy2002/react-force-rerender";
 import { useMountEffect, useUnmountEffect } from "@ptolemy2002/react-mount-effects";
-import { isNullOrUndefined } from "@ptolemy2002/js-utils";
 import HookResult, {HookResultData} from "@ptolemy2002/react-hook-result";
 import { partialMemo } from "@ptolemy2002/react-utils";
 
@@ -57,7 +56,7 @@ export type ProxyContextProviderProps<T> = {
     proxyRef?: React.MutableRefObject<T>;
 };
 
-export function createProxyContextProvider<T extends object>(
+export function createProxyContextProvider<T extends object | null>(
     contextClass: ProxyContext<T>
 ) {
     return partialMemo(function ProxyContextProvider({
@@ -108,7 +107,7 @@ export function createProxyContextProvider<T extends object>(
         const set = useCallback((newObj: T) => {
             if (newObj !== objRef.current) {
                 const prevObj = objRef.current;
-                if (!isNullOrUndefined(newObj)) {
+                if (newObj !== null) {
                     // The proxy will allow us to notify subscribers when a property is changed.
                     objRef.current = new Proxy(newObj, {
                         get: function (target, prop) {
@@ -121,7 +120,8 @@ export function createProxyContextProvider<T extends object>(
                             }
                         },
                         set: function (target, _prop, value) {
-                            const prop = _prop as keyof T;
+                            const prop = _prop as keyof object;
+
                             const prevValue = target[prop];
                             // Do this so that any setters in the object will be called before we make comparisons
                             // and notify subscribers.

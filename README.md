@@ -100,7 +100,6 @@ A hook that uses the context provided by the `ProxyContextProvider` component. T
 These should be installed in order to use the library, as npm does not automatically add peer dependencies to your project.
 - `react^18.3.1`
 - `react-dom^18.3.1`
-- `@ptolemy2002/js-utils^3.0.2`
 - `@ptolemy2002/react-utils^3.0.0`
 - `@ptolemy2002/react-force-rerender^2.0.0`
 - `@ptolemy2002/react-hook-result^2.1.1`

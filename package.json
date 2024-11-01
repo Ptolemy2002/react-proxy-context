@@ -21,7 +21,6 @@
     "release-major": "bash ./scripts/release.sh major"
   },
   "peerDependencies": {
-    "@ptolemy2002/js-utils": "^3.0.2",
     "@ptolemy2002/react-force-rerender": "^2.0.0",
     "@ptolemy2002/react-hook-result": "^2.1.1",
     "@ptolemy2002/react-mount-effects": "^2.0.0",
@@ -33,7 +32,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
-    "@ptolemy2002/js-utils": "^3.0.2",
     "@ptolemy2002/react-force-rerender": "^2.0.0",
     "@ptolemy2002/react-hook-result": "^2.1.1",
     "@ptolemy2002/react-mount-effects": "^2.0.0",

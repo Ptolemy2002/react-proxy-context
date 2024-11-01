@@ -25,8 +25,8 @@ export default defineConfig({
 
     rollupOptions: {
       external: [
-        'react', 'react-dom', '@ptolemy2002/js-utils', '@ptolemy2002/react-force-rerender',
-        '@ptoemy2002/react-mount-effects', '@ptolemy2002/react-hook-result', '@ptolemy2002/react-utils',
+        'react', 'react-dom', '@ptolemy2002/react-force-rerender', '@ptoemy2002/react-mount-effects',
+        '@ptolemy2002/react-hook-result', '@ptolemy2002/react-utils',
         'is-callable', 'nanoid'
       ],
       output: {
