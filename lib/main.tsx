@@ -32,12 +32,12 @@ export type ProxyContextValue<T> = {
     unsubscribe: (id: string) => void;
 };
 
-export function createProxyContext<T>(name: string): ContextWithName<ProxyContextValue<T> | undefined> {
+export function createProxyContext<T>(name: string): ProxyContext<T> {
     if (typeof Proxy == "undefined") throw new Error("Proxy is not supported in this environment.");
 
     const context = createContext<ProxyContextValue<T> | undefined>(
         undefined
-    ) as ContextWithName<ProxyContextValue<T> | undefined>;
+    ) as ProxyContext<T>;
 
     context.name = name;
     return context;
@@ -46,6 +46,8 @@ export function createProxyContext<T>(name: string): ContextWithName<ProxyContex
 export type Dependency<T> = keyof T | (
     <K extends keyof T>(prop: K, current: T[K], prev: T[K], obj: T) => boolean
 ) | null | undefined | false;
+
+export type ProxyContext<T> = ContextWithName<ProxyContextValue<T> | undefined>;
 
 export type ProxyContextProviderProps<T> = {
     children: ReactNode;
@@ -56,7 +58,7 @@ export type ProxyContextProviderProps<T> = {
 };
 
 export function createProxyContextProvider<T extends object>(
-    contextClass: ContextWithName<ProxyContextValue<T> | undefined>
+    contextClass: ProxyContext<T>
 ) {
     return partialMemo(function ProxyContextProvider({
         children,
@@ -183,7 +185,7 @@ export type UseProxyContextResult<T> = HookResultData<{
 }, readonly [T, (newObj: T) => T]>;
 
 export function useProxyContext<T>(
-    contextClass: ContextWithName<ProxyContextValue<T> | undefined>,
+    contextClass: ProxyContext<T>,
     deps: Dependency<T>[] | null = [],
     onChangeProp?: OnChangePropCallback<T>,
     onChangeReinit?: OnChangeReinitCallback<T>,

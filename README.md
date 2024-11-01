@@ -24,6 +24,8 @@ type Dependency<T> = keyof T | (
     <K extends keyof T>(prop: K, current: T[K], prev: T[K], obj: T) => boolean
 ) | null | undefined | false;
 
+type ProxyContext<T> = ContextWithName<ProxyContextValue<T> | undefined>;
+
 type ProxyContextValue<T> = {
     obj: T;
     set: (newObj: T) => T;
@@ -60,14 +62,14 @@ Creates a new instance of the ProxyContext, essentially to be used as the contex
 - `name` (String): The name of the context. This is used for debugging purposes.
 
 #### Returns
-`ContextWithName<ProxyContextValue<T> | undefined>` - The context object that can be used in a provider.
+`ProxyContext<T>` - The context object that can be used in a provider.
 
 ### createProxyContextProvider<T extends object>
 #### Description
 Creates a new proxy context provider component with the specified type. `ProxyContextProvider` is no longer used due to a TypeScript limitation that prevents the context type from being inferred.
 
 #### Parameters
-- `contextClass` (`ContextWithName<ProxyContextValue<T> | undefined>`): The context class that was created using `createProxyContext`.
+- `contextClass` (`ProxyContext<T>`): The context class that was created using `createProxyContext`.
 
 #### Returns
 `React.MemoExoticComponent<FunctionComponent<ProxyContextProviderProps<T> & { renderDeps?: any[] }>>` - The provider component that can be used in the React tree. The resulting component is memoized to prevent unnecessary re-renders, but the `renderDeps` prop can be used to force a re-render when the specified dependencies change (necessary when working with the children prop).
@@ -85,7 +87,7 @@ The following hooks are available in the library:
 A hook that uses the context provided by the `ProxyContextProvider` component. This hook also provides options to choose which properties to listen to and whether to listen to full reassignments. `T` represents the type of the object that is stored in the context.
 
 #### Parameters
-- `contextClass` (`ContextWithName<ProxyContextValue<T> | undefined>`): The context class that was created using `createProxyContext`.
+- `contextClass` (`ProxyContext<T>`): The context class that was created using `createProxyContext`.
 - `deps` (`Dependency<T>[] | null`): An array of dependencies to listen to. If any of these properties on the context change, the hook will re-render. If this is falsy, any mutation will trigger a re-render. You can also specify a function that returns a boolean to determine whether to re-render. If this is null, the hook will re-render on any mutation. By default, this is an empty array.
 - `onChangeProp` (`OnChangePropCallback<T> | undefined`): A function that is called whenever a property of the context is changed. The first parameter is the property that was changed, the second parameter is the current value of the property, and the third parameter is the previous value of the property. This is useful for listening to changes in the provider's parent component.
 - `onChangeReinit` (`OnChangeReinitCallback<T> | undefined`): A function that is called whenever the context is reinitialized. The first parameter is the current value of the context, and the second parameter is the previous value of the context. This is useful for listening to changes in the provider's parent component.
