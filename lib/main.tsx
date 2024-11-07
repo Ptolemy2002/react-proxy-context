@@ -176,7 +176,7 @@ export function createProxyContextProvider<T extends object | null>(
                 {children}
             </contextClass.Provider>
         );
-    }, ["children", "onChangeProp", "onChangeReinit", "proxyRef"], `${contextClass.name}Provider (Memo)`);
+    }, ["children", "onChangeProp", "onChangeReinit", "proxyRef"], `${contextClass.name}Provider`);
 }
 
 export type UseProxyContextResult<T> = HookResultData<{
