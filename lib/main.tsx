@@ -59,13 +59,13 @@ export type ProxyContextProviderProps<T> = {
 export function createProxyContextProvider<T extends object | null>(
     contextClass: ProxyContext<T>
 ) {
-    return partialMemo(function ProxyContextProvider({
+    return partialMemo(({
         children,
         value,
         onChangeProp,
         onChangeReinit,
         proxyRef
-    }: ProxyContextProviderProps<T>) {
+    }: ProxyContextProviderProps<T>) => {
         const changeSubscribers = useRef<
             {
                 [key: string]: {
@@ -176,7 +176,10 @@ export function createProxyContextProvider<T extends object | null>(
                 {children}
             </contextClass.Provider>
         );
-    }, ["children", "onChangeProp", "onChangeReinit", "proxyRef"], `${contextClass.name}Provider`);
+    },
+        ["children", "onChangeProp", "onChangeReinit", "proxyRef"],
+        contextClass.name + ".Provider"
+    );
 }
 
 export type UseProxyContextResult<T> = HookResultData<{
