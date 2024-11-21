@@ -44,7 +44,31 @@ export function createProxyContext<T>(name: string): ProxyContext<T> {
 
 export type Dependency<T> = keyof T | (
     <K extends keyof T>(prop: K, current: T[K], prev: T[K], obj: T) => boolean
-) | null | undefined | false;
+) | null | undefined | false | [keyof T, ...PropertyKey[]];
+
+export function evaluateDependency<T>(
+    dep: Dependency<T>
+): Exclude<Dependency<T>, any[]> | keyof T {
+    if (Array.isArray(dep)) {
+        const [first, ...rest] = dep;
+
+        // Evaluate a comparison of the given nested property.
+        return (prop, current, prev) => {
+            if (prop !== first) return false;
+
+            let currentComparisonObj: any = current;
+            let prevComparisonObj: any = prev;
+            for (const key of rest) {
+                currentComparisonObj = currentComparisonObj?.[key];
+                prevComparisonObj = prevComparisonObj?.[key];
+            }
+            
+            return currentComparisonObj !== prevComparisonObj;
+        };
+    }
+
+    return dep;
+}
 
 export type ProxyContext<T> = ContextWithName<ProxyContextValue<T> | undefined>;
 
@@ -129,16 +153,19 @@ export function createProxyContextProvider<T extends object | null>(
                             value = target[prop];
 
                             Object.values(changeSubscribers.current).forEach(subscriber => {
+                                const evaluatedDeps = subscriber.deps?.map(evaluateDependency);
                                 if (
-                                    !subscriber.deps
+                                    !evaluatedDeps
                                     ||
                                     (
-                                        subscriber.deps.includes(prop)
+                                        evaluatedDeps.includes(prop)
                                         &&
                                         prevValue !== value
                                     )
                                     ||
-                                    subscriber.deps.some(subProp => isCallable(subProp) && subProp(prop, value, prevValue, newObj))
+                                    evaluatedDeps.some(
+                                        subProp => isCallable(subProp) && subProp(prop, value, prevValue, newObj)
+                                    )
                                 ) {
                                     subscriber.propCallback(prop, value, prevValue);
                                 }

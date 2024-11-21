@@ -22,7 +22,7 @@ type OnChangeReinitCallback<T> =
 
 type Dependency<T> = keyof T | (
     <K extends keyof T>(prop: K, current: T[K], prev: T[K], obj: T) => boolean
-) | null | undefined | false;
+) | null | undefined | false | [keyof T, ...PropertyKey[]]
 
 type ProxyContext<T> = ContextWithName<ProxyContextValue<T> | undefined>;
 
@@ -54,9 +54,19 @@ type UseProxyContextResult<T> = HookResultData<{
 ## Functions
 The following functions are available in the library:
 
+### evaluateDependency<T>
+#### Description
+Given a dependency, if it is an array instance, converts it to the equivalent function that will test for equality of a nested property. If it is not an array instance, returns the dependency as is.
+
+#### Parameters
+- `dependency` (`Dependency<T>`): The dependency to evaluate.
+
+#### Returns
+`Dependency<T>` - The evaluated dependency. If the dependency is an array, it will be converted to a function that tests for equality of a nested property.
+
 ### createProxyContext<T>
 #### Description
-Creates a new instance of the ProxyContext, essentially to be used as the context type, with the specified name. This is effectively just the normal React createContext function, but with a check to ensure that the browser supports Proxies. `T` represents the type of the object that will be stored in the context.
+Creates a new instance of the ProxyContext, essentially to be used as the context type, with the specified name. This is effectively just the normal React `createContext` function, but with a check to ensure that the browser supports Proxies. `T` represents the type of the object that will be stored in the context.
 
 #### Parameters
 - `name` (String): The name of the context. This is used for debugging purposes.
@@ -88,7 +98,7 @@ A hook that uses the context provided by the `ProxyContextProvider` component. T
 
 #### Parameters
 - `contextClass` (`ProxyContext<T>`): The context class that was created using `createProxyContext`.
-- `deps` (`Dependency<T>[] | null`): An array of dependencies to listen to. If any of these properties on the context change, the hook will re-render. If this is falsy, any mutation will trigger a re-render. You can also specify a function that returns a boolean to determine whether to re-render. If this is null, the hook will re-render on any mutation. By default, this is an empty array.
+- `deps` (`Dependency<T>[] | null`): An array of dependencies to listen to. If any of these properties on the context change, the hook will re-render. If this is falsy, any mutation will trigger a re-render. If a dependency is an array, it represents a nested property dependency. You can also specify a function that returns a boolean to determine whether to re-render. By default, this is an empty array.
 - `onChangeProp` (`OnChangePropCallback<T> | undefined`): A function that is called whenever a property of the context is changed. The first parameter is the property that was changed, the second parameter is the current value of the property, and the third parameter is the previous value of the property. This is useful for listening to changes in the provider's parent component.
 - `onChangeReinit` (`OnChangeReinitCallback<T> | undefined`): A function that is called whenever the context is reinitialized. The first parameter is the current value of the context, and the second parameter is the previous value of the context. This is useful for listening to changes in the provider's parent component.
 - `listenReinit` (`boolean`): Whether to listen to full reassignments of the context. If this is true, the hook will re-render whenever the context is reinitialized. By default, this is true.
