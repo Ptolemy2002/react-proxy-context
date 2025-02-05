@@ -48,7 +48,7 @@ export type Dependency<_T, T=Exclude<_T, null | undefined>> = keyof T | (
 
 export function evaluateDependency<T>(
     dep: Dependency<T>
-): Exclude<Dependency<T>, any[]> | keyof T {
+): Exclude<Dependency<T>, any[]> {
     if (Array.isArray(dep)) {
         const [first, ...rest] = dep;
 
@@ -67,7 +67,7 @@ export function evaluateDependency<T>(
         };
     }
 
-    return dep;
+    return dep as Exclude<Dependency<T>, any[]>;
 }
 
 export type ProxyContext<T> = ContextWithName<ProxyContextValue<T> | undefined>;
@@ -164,7 +164,7 @@ export function createProxyContextProvider<T extends object | null>(
                                     )
                                     ||
                                     evaluatedDeps.some(
-                                        subProp => isCallable(subProp) && subProp(prop, value, prevValue, newObj)
+                                        subProp => isCallable(subProp) && subProp(prop, value, prevValue, newObj as Exclude<T, null | undefined>)
                                     )
                                 ) {
                                     subscriber.propCallback(prop, value, prevValue);
