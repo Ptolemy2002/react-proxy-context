@@ -42,7 +42,7 @@ export function createProxyContext<T>(name: string): ProxyContext<T> {
     return context;
 }
 
-export type Dependency<T> = keyof T | (
+export type Dependency<_T, T=Exclude<_T, null | undefined>> = keyof T | (
     <K extends keyof T>(prop: K, current: T[K], prev: T[K], obj: T) => boolean
 ) | null | undefined | false | [keyof T, ...PropertyKey[]];
 

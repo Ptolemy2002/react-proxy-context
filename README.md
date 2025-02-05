@@ -20,9 +20,9 @@ type OnChangeReinitCallback<T> =
     (current: T, prev?: T) => void
 ;
 
-type Dependency<T> = keyof T | (
+type Dependency<_T, T=Exclude<_T, null | undefined>> = keyof T | (
     <K extends keyof T>(prop: K, current: T[K], prev: T[K], obj: T) => boolean
-) | null | undefined | false | [keyof T, ...PropertyKey[]]
+) | null | undefined | false | [keyof T, ...PropertyKey[]];
 
 type ProxyContext<T> = ContextWithName<ProxyContextValue<T> | undefined>;
 
