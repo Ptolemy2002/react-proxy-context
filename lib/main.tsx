@@ -236,25 +236,27 @@ export function useProxyContext<T>(
         throw new Error(`No ${contextClass.name} provider found.`);
     }
 
+    // Put in a ref to ensure we don't resubscribe on every render.
+    const subscribeRef = useRef((cb: () => void) => {
+        const id = _context.subscribe(
+            (prop, current, prev?) => {
+                cb();
+                if (isCallable(onChangeProp)) onChangeProp(prop, current, prev);
+            },
+
+            (current, prev?) => {
+                if (listenReinit) cb();
+                if (isCallable(onChangeReinit)) onChangeReinit(current, prev);
+            },
+
+            deps
+        );
+
+        return () => _context.unsubscribe(id);
+    });
+
     const context = useSyncExternalStore(
-        (cb) => {
-            const id = _context.subscribe(
-                (prop, current, prev?) => {
-                    cb();
-                    if (isCallable(onChangeProp)) onChangeProp(prop, current, prev);
-                },
-
-                (current, prev?) => {
-                    if (listenReinit) cb();
-                    if (isCallable(onChangeReinit)) onChangeReinit(current, prev);
-                },
-
-                deps
-            );
-
-            return () => _context.unsubscribe(id);
-        },
-
+        subscribeRef.current,
         () => _context,
         () => _context
     );
