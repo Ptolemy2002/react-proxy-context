@@ -10,6 +10,10 @@
   "scripts": {
     "dev": "npm run build && vite --port 3000",
     "build": "tsc -b ./tsconfig.lib.json && vite build",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "preview": "vite preview",
     "postinstall": "npx typesync",
@@ -23,7 +27,6 @@
   "peerDependencies": {
     "@ptolemy2002/react-force-rerender": "^2.0.0",
     "@ptolemy2002/react-hook-result": "^2.1.1",
-    "@ptolemy2002/react-mount-effects": "^2.0.0",
     "@ptolemy2002/react-utils": "^3.0.0",
     "is-callable": "^1.2.7",
     "nanoid": "^5.0.7",
@@ -34,8 +37,10 @@
     "@eslint/js": "^9.11.1",
     "@ptolemy2002/react-force-rerender": "^2.0.0",
     "@ptolemy2002/react-hook-result": "^2.1.1",
-    "@ptolemy2002/react-mount-effects": "^2.0.0",
     "@ptolemy2002/react-utils": "^3.0.0",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/babel__generator": "^7.6.8",
     "@types/babel__template": "^7.4.4",
     "@types/babel__traverse": "^7.20.6",
@@ -47,12 +52,14 @@
     "@types/react": "^18.3.10",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.2",
+    "@vitest/ui": "^3.2.4",
     "eslint": "^9.11.1",
     "eslint-plugin-react": "^7.37.1",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.12",
     "globals": "^15.9.0",
     "is-callable": "^1.2.7",
+    "jsdom": "^27.0.0",
     "less": "^4.2.0",
     "nanoid": "^5.0.7",
     "path": "^0.12.7",
@@ -61,7 +68,8 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.7.0",
     "vite": "^5.4.8",
-    "vite-plugin-dts": "^4.2.3"
+    "vite-plugin-dts": "^4.2.3",
+    "vitest": "^3.2.4"
   },
   "exports": {
     ".": {

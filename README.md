@@ -113,7 +113,6 @@ These should be installed in order to use the library, as npm does not automatic
 - `@ptolemy2002/react-utils^3.0.0`
 - `@ptolemy2002/react-force-rerender^2.0.0`
 - `@ptolemy2002/react-hook-result^2.1.1`
-- `@ptolemy2002/react-mount-effects^2.0.0`
 
 ## Commands
 The following commands exist in the project:

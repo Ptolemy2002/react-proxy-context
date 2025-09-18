@@ -1,8 +1,8 @@
-import { createContext, useContext, useRef, useCallback, useImperativeHandle, Context, ReactNode } from "react";
+/* eslint-disable */
+import { createContext, useContext, useRef, useCallback, useImperativeHandle, Context, ReactNode, useSyncExternalStore } from "react";
 import { nanoid } from "nanoid";
 import isCallable from "is-callable";
 import useForceRerender from "@ptolemy2002/react-force-rerender";
-import { useMountEffect, useUnmountEffect } from "@ptolemy2002/react-mount-effects";
 import HookResult, {HookResultData} from "@ptolemy2002/react-hook-result";
 import { partialMemo } from "@ptolemy2002/react-utils";
 
@@ -128,6 +128,37 @@ export function createProxyContextProvider<T extends object | null>(
             delete changeSubscribers.current[id];
         }, []);
 
+        const emitChange = useCallback((prop: keyof T, current: T[keyof T], prev?: T[keyof T]) => {
+            Object.values(changeSubscribers.current).forEach(subscriber => {
+                const evaluatedDeps = subscriber.deps?.map(evaluateDependency);
+                if (
+                    !evaluatedDeps
+                    ||
+                    (
+                        evaluatedDeps.includes(prop as any)
+                        &&
+                        prev !== current
+                    )
+                    ||
+                    evaluatedDeps.some(
+                        subProp => isCallable(subProp) && subProp(prop, current as any, prev as any, objRef.current as Exclude<T, null | undefined>)
+                    )
+                ) {
+                    subscriber.propCallback(prop, current, prev);
+                }
+            });
+
+            if (isCallable(onChangeProp)) onChangeProp(prop, current, prev);
+        }, [onChangeProp]);
+
+        const emitReinit = useCallback((current: T, prev?: T) => {
+            Object.values(changeSubscribers.current).forEach(subscriber => {
+                subscriber.reinitCallback(current, prev);
+            });
+
+            if (isCallable(onChangeReinit)) onChangeReinit(current, prev);
+        }, [onChangeReinit]);
+
         const set = useCallback((newObj: T) => {
             if (newObj !== objRef.current) {
                 const prevObj = objRef.current;
@@ -143,6 +174,7 @@ export function createProxyContextProvider<T extends object | null>(
                                 return result;
                             }
                         },
+
                         set: function (target, _prop, value) {
                             const prop = _prop as keyof object;
 
@@ -152,26 +184,7 @@ export function createProxyContextProvider<T extends object | null>(
                             Reflect.set(target, prop, value, newObj);
                             value = target[prop];
 
-                            Object.values(changeSubscribers.current).forEach(subscriber => {
-                                const evaluatedDeps = subscriber.deps?.map(evaluateDependency);
-                                if (
-                                    !evaluatedDeps
-                                    ||
-                                    (
-                                        evaluatedDeps.includes(prop)
-                                        &&
-                                        prevValue !== value
-                                    )
-                                    ||
-                                    evaluatedDeps.some(
-                                        subProp => isCallable(subProp) && subProp(prop, value, prevValue, newObj as Exclude<T, null | undefined>)
-                                    )
-                                ) {
-                                    subscriber.propCallback(prop, value, prevValue);
-                                }
-                            });
-
-                            if (isCallable(onChangeProp)) onChangeProp(prop, value, prevValue);
+                            emitChange(prop as keyof T, value, prevValue);
                             return true;
                         }
                     });
@@ -179,17 +192,13 @@ export function createProxyContextProvider<T extends object | null>(
                     objRef.current = newObj;
                 }
 
-                Object.values(changeSubscribers.current).forEach(subscriber => {
-                    subscriber.reinitCallback(objRef.current!, prevObj);
-                });
-
-                if (isCallable(onChangeReinit)) onChangeReinit(objRef.current!, prevObj);
+                emitReinit(objRef.current!, prevObj);
                 forceRerender();
             }
 
             contextRef.current.obj = objRef.current;
             return objRef.current;
-        }, [onChangeProp, onChangeReinit]);
+        }, [onChangeProp, onChangeReinit, emitChange]);
         if (objRef.current === undefined) objRef.current = set(value);
 
         // Mutate the contextRef object instead of using literals so the children don't rerender every time this element does.
@@ -221,31 +230,34 @@ export function useProxyContext<T>(
     onChangeReinit?: OnChangeReinitCallback<T>,
     listenReinit = true
 ): UseProxyContextResult<T> {
-    const context = useContext(contextClass);
-    const forceRerender = useForceRerender();
-    const id = useRef<string | null>(null);
+    const _context = useContext(contextClass);
 
-    if (context === undefined) {
+    if (_context === undefined) {
         throw new Error(`No ${contextClass.name} provider found.`);
     }
 
-    useMountEffect(() => {
-        id.current = context?.subscribe(
-            (prop, current, prev?) => {
-                forceRerender();
-                if (isCallable(onChangeProp)) onChangeProp(prop, current, prev);
-            },
-            (current, prev?) => {
-                if (listenReinit) forceRerender();
-                if (isCallable(onChangeReinit)) onChangeReinit(current, prev);
-            },
-            deps
-        );
-    });
+    const context = useSyncExternalStore(
+        (cb) => {
+            const id = _context.subscribe(
+                (prop, current, prev?) => {
+                    cb();
+                    if (isCallable(onChangeProp)) onChangeProp(prop, current, prev);
+                },
 
-    useUnmountEffect(() => {
-        context.unsubscribe(id.current!);
-    });
+                (current, prev?) => {
+                    if (listenReinit) cb();
+                    if (isCallable(onChangeReinit)) onChangeReinit(current, prev);
+                },
+
+                deps
+            );
+
+            return () => _context.unsubscribe(id);
+        },
+
+        () => _context,
+        () => _context
+    );
 
     return new HookResult(
         { value: context.obj, set: context.set }, ["value", "set"]
