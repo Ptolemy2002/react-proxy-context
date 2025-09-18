@@ -237,7 +237,7 @@ export function useProxyContext<T>(
     }
 
     // Put in a ref to ensure we don't resubscribe on every render.
-    const subscribeRef = useRef((cb: () => void) => {
+    const subscribeRef = useCallback((cb: () => void) => {
         const id = _context.subscribe(
             (prop, current, prev?) => {
                 cb();
@@ -253,10 +253,10 @@ export function useProxyContext<T>(
         );
 
         return () => _context.unsubscribe(id);
-    });
+    }, [deps, listenReinit, onChangeProp, onChangeReinit, _context]);
 
     const context = useSyncExternalStore(
-        subscribeRef.current,
+        subscribeRef,
         () => _context,
         () => _context
     );
