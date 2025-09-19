@@ -5,6 +5,7 @@ import isCallable from "is-callable";
 import useForceRerender from "@ptolemy2002/react-force-rerender";
 import HookResult, {HookResultData} from "@ptolemy2002/react-hook-result";
 import { partialMemo } from "@ptolemy2002/react-utils";
+import { _ } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
 
 /*
     Proxies. Courtesy of StackOverflow:
@@ -236,16 +237,22 @@ export function useProxyContext<T>(
         throw new Error(`No ${contextClass.name} provider found.`);
     }
 
+    const contextRef = useRef<{ value: typeof _context }>({ value: _context });
+
     // Put in a ref to ensure we don't resubscribe on every render.
     const subscribeRef = useCallback((cb: () => void) => {
         const id = _context.subscribe(
             (prop, current, prev?) => {
+                contextRef.current = { value: _context };
                 cb();
                 if (isCallable(onChangeProp)) onChangeProp(prop, current, prev);
             },
 
             (current, prev?) => {
-                if (listenReinit) cb();
+                if (listenReinit) {
+                    contextRef.current = { value: _context };
+                    cb();
+                }
                 if (isCallable(onChangeReinit)) onChangeReinit(current, prev);
             },
 
@@ -257,11 +264,11 @@ export function useProxyContext<T>(
 
     const context = useSyncExternalStore(
         subscribeRef,
-        () => _context,
-        () => _context
+        () => contextRef.current,
+        () => contextRef.current
     );
 
     return new HookResult(
-        { value: context.obj, set: context.set }, ["value", "set"]
+        { value: context.value.obj, set: context.value.set }, ["value", "set"]
     ) as UseProxyContextResult<T>;
 }
