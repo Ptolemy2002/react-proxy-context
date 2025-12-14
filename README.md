@@ -17,7 +17,7 @@ type OnChangePropCallback<T> =
     <K extends keyof T>(prop: K, current: T[K], prev?: T[K]) => void
 ;
 type OnChangeReinitCallback<T> =
-    (current: T, prev?: T) => void
+    (current: T, prev?: T, initial?: boolean) => void
 ;
 
 type Dependency<_T, T=Exclude<_T, null | undefined>> = keyof T | (
@@ -113,7 +113,7 @@ Creates a new proxy context provider component with the specified type. `ProxyCo
 The component has the following props:
 - `value` (`T | ProxyContextValueWrapper<T>`): The value of the context. This can be either a raw value of type `T`, which will be automatically wrapped in a `ProxyContextValueWrapper`, or a pre-existing `ProxyContextValueWrapper<T>` instance. This allows you to initialize the wrapper outside of the context and pass it in, giving you more control over the proxy lifecycle.
 - `onChangeProp` (`OnChangePropCallback<T>`): A function that is called whenever a property of the context is changed. The first parameter is the property that was changed, the second parameter is the current value of the property, and the third parameter is the previous value of the property. This is useful for listening to changes in the provider's parent component.
-- `onChangeReinit` (`OnChangeReinitCallback<T>`): A function that is called whenever the context is reinitialized. The first parameter is the current value of the context, and the second parameter is the previous value of the context. This is useful for listening to changes in the provider's parent component.
+- `onChangeReinit` (`OnChangeReinitCallback<T>`): A function that is called whenever the context is reinitialized. The first parameter is the current value of the context, the second parameter is the previous value of the context, and the third parameter is a boolean indicating whether this is the first initialization. Also called on first initialization, with the previous value being `undefined` if you passed in a raw value instead of a `ProxyContextValueWrapper`. This is useful for listening to changes in the provider's parent component.
 - `proxyRef` (`React.MutableRefObject<T>`): A ref object that is assigned the proxy object of the context. This is useful for accessing the proxy object directly by the provider's parent component.
 
 ## Hooks
@@ -126,7 +126,7 @@ A hook that uses the context provided by the `ProxyContextProvider` component. T
 - `contextClass` (`ProxyContext<T>`): The context class that was created using `createProxyContext`.
 - `deps` (`Dependency<T>[] | null`): An array of dependencies to listen to. If any of these properties on the context change, the hook will re-render. If this is falsy, any mutation will trigger a re-render. If a dependency is an array, it represents a nested property dependency. You can also specify a function that returns a boolean to determine whether to re-render. By default, this is an empty array.
 - `onChangeProp` (`OnChangePropCallback<T> | undefined`): A function that is called whenever a property of the context is changed. The first parameter is the property that was changed, the second parameter is the current value of the property, and the third parameter is the previous value of the property. This is useful for listening to changes in the consumer component.
-- `onChangeReinit` (`OnChangeReinitCallback<T> | undefined`): A function that is called whenever the context is reinitialized. The first parameter is the current value of the context, and the second parameter is the previous value of the context. Also called on initial initialization with the second parameter being `undefined`. This is useful for listening to changes in the consumer component.
+- `onChangeReinit` (`OnChangeReinitCallback<T> | undefined`): A function that is called whenever the context is reinitialized. The first parameter is the current value of the context, the second parameter is the previous value of the context, and the third parameter is a boolean indicating whether this is the first initialization.
 - `listenReinit` (`boolean`): Whether to listen to full reassignments of the context. If this is true, the hook will re-render whenever the context is reinitialized. By default, this is true.
 
 #### Returns

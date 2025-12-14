@@ -18,7 +18,7 @@ export type OnChangePropCallback<T> =
     <K extends keyof T>(prop: K, current: T[K], prev?: T[K]) => void
     ;
 export type OnChangeReinitCallback<T> =
-    (current: T, prev?: T) => void
+    (current: T, prev?: T, initial?: boolean) => void
     ;
 
 export function createProxyContext<T>(name: string): ProxyContext<T> {
@@ -127,9 +127,9 @@ export class ProxyContextValueWrapper<T> {
         });
     }
 
-    emitReinit(current: T, prev?: T) {
+    emitReinit(current: T, prev?: T, initial=false) {
         Object.values(this.changeSubscribers).forEach(subscriber => {
-            subscriber.reinitCallback(current, prev);
+            subscriber.reinitCallback(current, prev, initial);
         });
     }
 
@@ -193,7 +193,7 @@ export function createProxyContextProvider<T extends object | null>(
         const wrapperRef = useRef<ProxyContextValueWrapper<T> | undefined>(undefined);
         if (wrapperRef.current === undefined) {
             wrapperRef.current = value instanceof ProxyContextValueWrapper ? value : new ProxyContextValueWrapper<T>(value);
-            onChangeReinit?.(wrapperRef.current.get(), undefined);
+            onChangeReinit?.(wrapperRef.current.get(), value instanceof ProxyContextValueWrapper ? value.get() : undefined, true);
         }
 
         const forceRerender = useForceRerender();
