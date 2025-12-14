@@ -24,22 +24,18 @@ type Dependency<_T, T=Exclude<_T, null | undefined>> = keyof T | (
     <K extends keyof T>(prop: K, current: T[K], prev: T[K], obj: T) => boolean
 ) | null | undefined | false | [keyof T, ...PropertyKey[]];
 
-type ProxyContext<T> = ContextWithName<ProxyContextValue<T> | undefined>;
+type ProxyContext<T> = ContextWithName<ProxyContextValueWrapper<T> | undefined>;
 
-type ProxyContextValue<T> = {
-    obj: T;
-    set: (newObj: T) => T;
-    subscribe: (
-        propCallback: OnChangePropCallback<T>,
-        reinitCallback: OnChangeReinitCallback<T>,
-        deps: Dependency<T>[]
-    ) => string;
-    unsubscribe: (id: string) => void;
+type ProxyContextChangeSubscriber<T> = {
+    id: string;
+    deps: Dependency<T>[] | null;
+    propCallback: OnChangePropCallback<T>;
+    reinitCallback: OnChangeReinitCallback<T>;
 };
 
 type ProxyContextProviderProps<T> = {
     children: ReactNode;
-    value: T;
+    value: T | ProxyContextValueWrapper<T>;
     onChangeProp?: OnChangePropCallback<T>;
     onChangeReinit?: OnChangeReinitCallback<T>;
     proxyRef?: React.MutableRefObject<T>;
@@ -50,6 +46,36 @@ type UseProxyContextResult<T> = HookResultData<{
     set: (newObj: T) => T;
 }, readonly [T, (newObj: T) => T]>;
 ```
+
+## Classes
+The following classes are available in the library:
+
+### ProxyContextValueWrapper<T>
+#### Description
+A class that wraps a value and provides proxy-based reactivity through subscription management. This class manages the proxy object internally and allows subscribers to listen to both property mutations and full object reassignments. The main benefit of this class is that it allows you to initialize a proxied value outside of a React context and pass it into the provider later, giving you more control over the proxy lifecycle.
+
+#### Constructor
+- `value` (`T`): The initial value to wrap in a proxy.
+
+#### Methods
+- `get()`: Returns the current proxied value.
+  - Returns: `T`
+- `set(newObj: T)`: Sets a new value and wraps it in a proxy. Emits reinit events to all subscribers.
+  - Parameters:
+    - `newObj` (`T`): The new value to set
+  - Returns: `T` - The new proxied value
+- `subscribe(propCallback, reinitCallback, deps)`: Subscribes to changes in the proxied object.
+  - Parameters:
+    - `propCallback` (`OnChangePropCallback<T>`): Called when a property changes
+    - `reinitCallback` (`OnChangeReinitCallback<T>`): Called when the entire object is reassigned
+    - `deps` (`Dependency<T>[] | null`): Array of dependencies to listen to, or null to listen to all changes
+  - Returns: `string` - A unique subscription ID
+- `unsubscribe(id: string)`: Unsubscribes from changes using the subscription ID.
+- `emitChange(prop, current, prev?)`: Emits a property change event to all relevant subscribers (internal use).
+- `emitReinit(current, prev?)`: Emits a reinitialization event to all subscribers (internal use).
+
+#### Properties
+- `changeSubscribers`: A record of all current subscribers (internal use).
 
 ## Functions
 The following functions are available in the library:
@@ -74,7 +100,7 @@ Creates a new instance of the ProxyContext, essentially to be used as the contex
 #### Returns
 `ProxyContext<T>` - The context object that can be used in a provider.
 
-### createProxyContextProvider<T extends object>
+### createProxyContextProvider<T extends object | null>
 #### Description
 Creates a new proxy context provider component with the specified type. `ProxyContextProvider` is no longer used due to a TypeScript limitation that prevents the context type from being inferred.
 
@@ -84,8 +110,8 @@ Creates a new proxy context provider component with the specified type. `ProxyCo
 #### Returns
 `React.MemoExoticComponent<FunctionComponent<ProxyContextProviderProps<T> & { renderDeps?: any[] }>>` - The provider component that can be used in the React tree. The resulting component is memoized to prevent unnecessary re-renders, but the `renderDeps` prop can be used to force a re-render when the specified dependencies change (necessary when working with the children prop).
 
-The component has the following other props:
-- `value` (T): The value of the context. This is what is reported when the context is not provided.
+The component has the following props:
+- `value` (`T | ProxyContextValueWrapper<T>`): The value of the context. This can be either a raw value of type `T`, which will be automatically wrapped in a `ProxyContextValueWrapper`, or a pre-existing `ProxyContextValueWrapper<T>` instance. This allows you to initialize the wrapper outside of the context and pass it in, giving you more control over the proxy lifecycle.
 - `onChangeProp` (`OnChangePropCallback<T>`): A function that is called whenever a property of the context is changed. The first parameter is the property that was changed, the second parameter is the current value of the property, and the third parameter is the previous value of the property. This is useful for listening to changes in the provider's parent component.
 - `onChangeReinit` (`OnChangeReinitCallback<T>`): A function that is called whenever the context is reinitialized. The first parameter is the current value of the context, and the second parameter is the previous value of the context. This is useful for listening to changes in the provider's parent component.
 - `proxyRef` (`React.MutableRefObject<T>`): A ref object that is assigned the proxy object of the context. This is useful for accessing the proxy object directly by the provider's parent component.
@@ -94,17 +120,17 @@ The component has the following other props:
 The following hooks are available in the library:
 
 ### useProxyContext<T>
-A hook that uses the context provided by the `ProxyContextProvider` component. This hook also provides options to choose which properties to listen to and whether to listen to full reassignments. `T` represents the type of the object that is stored in the context.
+A hook that uses the context provided by the `ProxyContextProvider` component. This hook uses React 18's `useSyncExternalStore` for optimal concurrent rendering support and provides options to choose which properties to listen to and whether to listen to full reassignments. `T` represents the type of the object that is stored in the context.
 
 #### Parameters
 - `contextClass` (`ProxyContext<T>`): The context class that was created using `createProxyContext`.
 - `deps` (`Dependency<T>[] | null`): An array of dependencies to listen to. If any of these properties on the context change, the hook will re-render. If this is falsy, any mutation will trigger a re-render. If a dependency is an array, it represents a nested property dependency. You can also specify a function that returns a boolean to determine whether to re-render. By default, this is an empty array.
-- `onChangeProp` (`OnChangePropCallback<T> | undefined`): A function that is called whenever a property of the context is changed. The first parameter is the property that was changed, the second parameter is the current value of the property, and the third parameter is the previous value of the property. This is useful for listening to changes in the provider's parent component.
-- `onChangeReinit` (`OnChangeReinitCallback<T> | undefined`): A function that is called whenever the context is reinitialized. The first parameter is the current value of the context, and the second parameter is the previous value of the context. This is useful for listening to changes in the provider's parent component.
+- `onChangeProp` (`OnChangePropCallback<T> | undefined`): A function that is called whenever a property of the context is changed. The first parameter is the property that was changed, the second parameter is the current value of the property, and the third parameter is the previous value of the property. This is useful for listening to changes in the consumer component.
+- `onChangeReinit` (`OnChangeReinitCallback<T> | undefined`): A function that is called whenever the context is reinitialized. The first parameter is the current value of the context, and the second parameter is the previous value of the context. Also called on initial initialization with the second parameter being `undefined`. This is useful for listening to changes in the consumer component.
 - `listenReinit` (`boolean`): Whether to listen to full reassignments of the context. If this is true, the hook will re-render whenever the context is reinitialized. By default, this is true.
 
 #### Returns
-`UseProxyContextResult<T>` - An object containing the current value of the context and a function to set the context. The function returns the new value of the context wrapped in a `Proxy`.
+`UseProxyContextResult<T>` - An object containing the current value of the context and a function to set the context. The `value` property returns the unwrapped proxied object, and the `set` function returns the new value of the context wrapped in a `Proxy`. The hook subscribes to the `ProxyContextValueWrapper` and automatically manages subscription cleanup.
 
 ## Peer Dependencies
 These should be installed in order to use the library, as npm does not automatically add peer dependencies to your project.

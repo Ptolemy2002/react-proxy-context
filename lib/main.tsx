@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { createContext, useContext, useRef, useCallback, useImperativeHandle, Context, ReactNode, useSyncExternalStore } from "react";
+import { createContext, useContext, useRef, useCallback, useImperativeHandle, Context, ReactNode, useSyncExternalStore, useEffect } from "react";
 import { nanoid } from "nanoid";
 import isCallable from "is-callable";
 import useForceRerender from "@ptolemy2002/react-force-rerender";
@@ -21,21 +21,10 @@ export type OnChangeReinitCallback<T> =
     (current: T, prev?: T) => void
     ;
 
-export type ProxyContextValue<T> = {
-    obj: T;
-    set: (newObj: T) => T;
-    subscribe: (
-        propCallback: OnChangePropCallback<T>,
-        reinitCallback: OnChangeReinitCallback<T>,
-        deps: Dependency<T>[] | null
-    ) => string;
-    unsubscribe: (id: string) => void;
-};
-
 export function createProxyContext<T>(name: string): ProxyContext<T> {
     if (typeof Proxy == "undefined") throw new Error("Proxy is not supported in this environment.");
 
-    const context = createContext<ProxyContextValue<T> | undefined>(
+    const context = createContext<ProxyContextValueWrapper<T> | undefined>(
         undefined
     ) as ProxyContext<T>;
 
@@ -71,15 +60,124 @@ export function evaluateDependency<T>(
     return dep as Exclude<Dependency<T>, any[]>;
 }
 
-export type ProxyContext<T> = ContextWithName<ProxyContextValue<T> | undefined>;
+export type ProxyContext<T> = ContextWithName<ProxyContextValueWrapper<T> | undefined>;
 
 export type ProxyContextProviderProps<T> = {
     children: ReactNode;
-    value: T;
+    value: T | ProxyContextValueWrapper<T>;
     onChangeProp?: OnChangePropCallback<T>;
     onChangeReinit?: OnChangeReinitCallback<T>;
     proxyRef?: React.MutableRefObject<T>;
 };
+
+export type ProxyContextChangeSubscriber<T> = {
+    id: string;
+    deps: Dependency<T>[] | null;
+    propCallback: OnChangePropCallback<T>;
+    reinitCallback: OnChangeReinitCallback<T>;
+};
+
+export class ProxyContextValueWrapper<T> {
+    private value!: T;
+    changeSubscribers: Record<string, ProxyContextChangeSubscriber<T>> = {};
+
+    constructor(value: T) {
+        this.set(value);
+    }
+
+    subscribe(
+        propCallback: OnChangePropCallback<T>,
+        reinitCallback: OnChangeReinitCallback<T>,
+        deps: Dependency<T>[] | null
+    ) {
+        const id = nanoid();
+
+        this.changeSubscribers[id] = {
+            id,
+            deps,
+            propCallback,
+            reinitCallback
+        };
+
+        return id;
+    }
+
+    unsubscribe(id: string) {
+        delete this.changeSubscribers[id];
+    }
+
+    emitChange(prop: keyof T, current: T[keyof T], prev?: T[keyof T]) {
+        Object.values(this.changeSubscribers).forEach(subscriber => {
+            const evaluatedDeps = subscriber.deps?.map(evaluateDependency);
+            if (
+                !evaluatedDeps
+                ||
+                (
+                    evaluatedDeps.includes(prop as any)
+                    &&
+                    prev !== current
+                )
+                ||
+                evaluatedDeps.some(
+                    subProp => isCallable(subProp) && subProp(prop, current as any, prev as any, this.value as Exclude<T, null | undefined>)
+                )
+            ) {
+                subscriber.propCallback(prop, current, prev);
+            }
+        });
+    }
+
+    emitReinit(current: T, prev?: T) {
+        Object.values(this.changeSubscribers).forEach(subscriber => {
+            subscriber.reinitCallback(current, prev);
+        });
+    }
+
+    get(): T {
+        return this.value;
+    }
+
+    set(newObj: T): T {
+        const self = this;
+        if (newObj !== this.value) {
+            const prevObj = this.value;
+
+            if (newObj !== null && newObj !== undefined) {
+                this.value = new Proxy(newObj, {
+                    get: function (target, prop) {
+                        const result = Reflect.get(target, prop, newObj);
+
+                        if (isCallable(result)) {
+                            return (result as Function).bind(self.value);
+                        } else {
+                            return result;
+                        }
+                    },
+
+                    set: (target, _prop, value) => {
+                        const prop = _prop as keyof object;
+
+                        const prevValue = target[prop];
+
+                        // Do this so that any setters in the object will be called before we make comparisons
+                        // and notify subscribers.
+                        Reflect.set(target, prop, value, newObj);
+                        value = target[prop];
+
+                        this.emitChange(prop as keyof T, value, prevValue);
+                        return true;
+                    }
+                });
+            } else {
+                this.value = newObj;
+            }
+
+            this.emitReinit(this.value!, prevObj);
+        }
+
+        return this.value;
+    }
+}
 
 export function createProxyContextProvider<T extends object | null>(
     contextClass: ProxyContext<T>
@@ -91,125 +189,32 @@ export function createProxyContextProvider<T extends object | null>(
         onChangeReinit,
         proxyRef
     }: ProxyContextProviderProps<T>) => {
-        const changeSubscribers = useRef<
-            {
-                [key: string]: {
-                    id: string;
-                    deps: Dependency<T>[] | null;
-                    propCallback: OnChangePropCallback<T>;
-                    reinitCallback: OnChangeReinitCallback<T>;
-                };
-            }
-        >({});
-
         // The undefined value will be changed before the first render.
-        const objRef = useRef<T>();
-        const contextRef = useRef<ProxyContextValue<T>>({} as ProxyContextValue<T>);
+        const wrapperRef = useRef<ProxyContextValueWrapper<T> | undefined>(undefined);
+        if (wrapperRef.current === undefined) {
+            wrapperRef.current = value instanceof ProxyContextValueWrapper ? value : new ProxyContextValueWrapper<T>(value);
+            onChangeReinit?.(wrapperRef.current.get(), undefined);
+        }
+
         const forceRerender = useForceRerender();
-        useImperativeHandle(proxyRef, () => objRef.current!, [objRef.current]);
+        useImperativeHandle(proxyRef, () => wrapperRef.current!.get(), [wrapperRef.current!.get()]);
+        useEffect(() => {
+            const id = wrapperRef.current!.subscribe(
+                onChangeProp ?? (() => {}),
+                (...args) => {
+                    if (isCallable(onChangeReinit)) onChangeReinit(...args);
+                    forceRerender();
+                },
+                null
+            );
 
-        const subscribe = useCallback((
-            propCallback: OnChangePropCallback<T>,
-            reinitCallback: OnChangeReinitCallback<T>,
-            deps: Dependency<T>[] | null
-        ) => {
-            const id = nanoid();
-
-            changeSubscribers.current[id] = {
-                id,
-                deps,
-                propCallback,
-                reinitCallback
+            return () => {
+                wrapperRef.current!.unsubscribe(id);
             };
-
-            return id;
-        }, []);
-
-        const unsubscribe = useCallback((id: string) => {
-            delete changeSubscribers.current[id];
-        }, []);
-
-        const emitChange = useCallback((prop: keyof T, current: T[keyof T], prev?: T[keyof T]) => {
-            Object.values(changeSubscribers.current).forEach(subscriber => {
-                const evaluatedDeps = subscriber.deps?.map(evaluateDependency);
-                if (
-                    !evaluatedDeps
-                    ||
-                    (
-                        evaluatedDeps.includes(prop as any)
-                        &&
-                        prev !== current
-                    )
-                    ||
-                    evaluatedDeps.some(
-                        subProp => isCallable(subProp) && subProp(prop, current as any, prev as any, objRef.current as Exclude<T, null | undefined>)
-                    )
-                ) {
-                    subscriber.propCallback(prop, current, prev);
-                }
-            });
-
-            if (isCallable(onChangeProp)) onChangeProp(prop, current, prev);
-        }, [onChangeProp]);
-
-        const emitReinit = useCallback((current: T, prev?: T) => {
-            Object.values(changeSubscribers.current).forEach(subscriber => {
-                subscriber.reinitCallback(current, prev);
-            });
-
-            if (isCallable(onChangeReinit)) onChangeReinit(current, prev);
-        }, [onChangeReinit]);
-
-        const set = useCallback((newObj: T) => {
-            if (newObj !== objRef.current) {
-                const prevObj = objRef.current;
-                if (newObj !== null) {
-                    // The proxy will allow us to notify subscribers when a property is changed.
-                    objRef.current = new Proxy(newObj, {
-                        get: function (target, prop) {
-                            const result = Reflect.get(target, prop, newObj);
-
-                            if (isCallable(result)) {
-                                return (result as Function).bind(objRef.current);
-                            } else {
-                                return result;
-                            }
-                        },
-
-                        set: function (target, _prop, value) {
-                            const prop = _prop as keyof object;
-
-                            const prevValue = target[prop];
-                            // Do this so that any setters in the object will be called before we make comparisons
-                            // and notify subscribers.
-                            Reflect.set(target, prop, value, newObj);
-                            value = target[prop];
-
-                            emitChange(prop as keyof T, value, prevValue);
-                            return true;
-                        }
-                    });
-                } else {
-                    objRef.current = newObj;
-                }
-
-                emitReinit(objRef.current!, prevObj);
-                forceRerender();
-            }
-
-            contextRef.current.obj = objRef.current;
-            return objRef.current;
-        }, [onChangeProp, onChangeReinit, emitChange]);
-        if (objRef.current === undefined) objRef.current = set(value);
-
-        // Mutate the contextRef object instead of using literals so the children don't rerender every time this element does.
-        contextRef.current.obj = objRef.current;
-        contextRef.current.set = set;
-        contextRef.current.subscribe = subscribe;
-        contextRef.current.unsubscribe = unsubscribe;
+        }, [onChangeProp, onChangeReinit, forceRerender]);
 
         return (
-            <contextClass.Provider value={contextRef.current}>
+            <contextClass.Provider value={wrapperRef.current}>
                 {children}
             </contextClass.Provider>
         );
@@ -269,6 +274,7 @@ export function useProxyContext<T>(
     );
 
     return new HookResult(
-        { value: context.value.obj, set: context.value.set }, ["value", "set"]
+        // The binding is necessary to fix a strange issue I'm having.
+        { value: context.value.get(), set: context.value.set.bind(context.value) }, ["value", "set"]
     ) as UseProxyContextResult<T>;
 }
