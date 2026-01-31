@@ -232,10 +232,11 @@ export type UseProxyContextResult<T> = HookResultData<{
 }, readonly [T, (newObj: T) => T]>;
 
 export type UseProxyContextArgsNoClass<T> = ArrayWithOptional<
-    [Dependency<T>[] | null],
-    ArrayWithOptional<
-        [OnChangePropCallback<T>], ArrayWithOptional<
-            [OnChangeReinitCallback<T>], [boolean]
+    [], ArrayWithOptional<[Dependency<T>[] | null],
+        ArrayWithOptional<
+            [OnChangePropCallback<T>], ArrayWithOptional<
+                [OnChangeReinitCallback<T>], [boolean]
+            >
         >
     >
 >;

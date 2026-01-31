@@ -50,10 +50,11 @@ type UseProxyContextResult<T> = HookResultData<{
 type ArrayWithOptional<AR extends unknown[], AO extends unknown[]> = AR | [...AR, ...AO];
 
 type UseProxyContextArgsNoClass<T> = ArrayWithOptional<
-    [Dependency<T>[] | null],
-    ArrayWithOptional<
-        [OnChangePropCallback<T>], ArrayWithOptional<
-            [OnChangeReinitCallback<T>], [boolean]
+    [], ArrayWithOptional<[Dependency<T>[] | null],
+        ArrayWithOptional<
+            [OnChangePropCallback<T>], ArrayWithOptional<
+                [OnChangeReinitCallback<T>], [boolean]
+            >
         >
     >
 >;
