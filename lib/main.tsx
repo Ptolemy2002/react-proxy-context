@@ -231,16 +231,16 @@ export type UseProxyContextResult<T> = HookResultData<{
     set: (newObj: T) => T;
 }, readonly [T, (newObj: T) => T]>;
 
-export type UseProxyContextArgs<T> = ArrayWithOptional<
-    [ProxyContext<T>], ArrayWithOptional<
-        [Dependency<T>[] | null],
-        ArrayWithOptional<
-            [OnChangePropCallback<T>], ArrayWithOptional<
-                [OnChangeReinitCallback<T>], [boolean]
-            >
+export type UseProxyContextArgsNoClass<T> = ArrayWithOptional<
+    [Dependency<T>[] | null],
+    ArrayWithOptional<
+        [OnChangePropCallback<T>], ArrayWithOptional<
+            [OnChangeReinitCallback<T>], [boolean]
         >
     >
 >;
+
+export type UseProxyContextArgs<T> = ArrayWithOptional<[ProxyContext<T>], UseProxyContextArgsNoClass<T>>;
 
 export function useProxyContext<T>(
     ...[

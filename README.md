@@ -49,18 +49,16 @@ type UseProxyContextResult<T> = HookResultData<{
 // ArrayWithOptional is internal
 type ArrayWithOptional<AR extends unknown[], AO extends unknown[]> = AR | [...AR, ...AO];
 
-type UseProxyContextArgs<T> = ArrayWithOptional<
-    [
-        ProxyContext<T>,
-    ], ArrayWithOptional<
-        [Dependency<T>[] | null],
-        ArrayWithOptional<
-            [OnChangePropCallback<T>], ArrayWithOptional<
-                [OnChangeReinitCallback<T>], [boolean]
-            >
+type UseProxyContextArgsNoClass<T> = ArrayWithOptional<
+    [Dependency<T>[] | null],
+    ArrayWithOptional<
+        [OnChangePropCallback<T>], ArrayWithOptional<
+            [OnChangeReinitCallback<T>], [boolean]
         >
     >
 >;
+
+type UseProxyContextArgs<T> = ArrayWithOptional<[ProxyContext<T>], UseProxyContextArgsNoClass<T>>;
 ```
 
 ## Classes
