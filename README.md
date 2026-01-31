@@ -33,9 +33,9 @@ type ProxyContextChangeSubscriber<T> = {
     reinitCallback: OnChangeReinitCallback<T>;
 };
 
-type ProxyContextProviderProps<T> = {
+type ProxyContextProviderProps<T, InputT = T> = {
     children: ReactNode;
-    value: T | ProxyContextValueWrapper<T>;
+    value: InputT | ProxyContextValueWrapper<T>;
     onChangeProp?: OnChangePropCallback<T>;
     onChangeReinit?: OnChangeReinitCallback<T>;
     proxyRef?: React.MutableRefObject<T>;
@@ -45,6 +45,14 @@ type UseProxyContextResult<T> = HookResultData<{
     value: T;
     set: (newObj: T) => T;
 }, readonly [T, (newObj: T) => T]>;
+
+type UseProxyContextArgs<T> = [
+    ProxyContext<T>,
+    Dependency<T>[] | null,
+    OnChangePropCallback<T>,
+    OnChangeReinitCallback<T>,
+    boolean
+];
 ```
 
 ## Classes
@@ -100,12 +108,13 @@ Creates a new instance of the ProxyContext, essentially to be used as the contex
 #### Returns
 `ProxyContext<T>` - The context object that can be used in a provider.
 
-### createProxyContextProvider<T extends object | null>
+### createProxyContextProvider<T extends object | null, InputT = T>
 #### Description
 Creates a new proxy context provider component with the specified type. `ProxyContextProvider` is no longer used due to a TypeScript limitation that prevents the context type from being inferred.
 
 #### Parameters
 - `contextClass` (`ProxyContext<T>`): The context class that was created using `createProxyContext`.
+- `transformInput` (`(input: InputT) => T`): A function that transforms the input value into the desired type `T`. This is useful when the input type differs from the context type, allowing for custom initialization logic. By default, this function simply casts the input to type `T`.
 
 #### Returns
 `React.MemoExoticComponent<FunctionComponent<ProxyContextProviderProps<T> & { renderDeps?: any[] }>>` - The provider component that can be used in the React tree. The resulting component is memoized to prevent unnecessary re-renders, but the `renderDeps` prop can be used to force a re-render when the specified dependencies change (necessary when working with the children prop).

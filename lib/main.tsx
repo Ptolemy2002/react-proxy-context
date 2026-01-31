@@ -62,9 +62,9 @@ export function evaluateDependency<T>(
 
 export type ProxyContext<T> = ContextWithName<ProxyContextValueWrapper<T> | undefined>;
 
-export type ProxyContextProviderProps<T> = {
+export type ProxyContextProviderProps<T, InputT = T> = {
     children: ReactNode;
-    value: T | ProxyContextValueWrapper<T>;
+    value: InputT | ProxyContextValueWrapper<T>;
     onChangeProp?: OnChangePropCallback<T>;
     onChangeReinit?: OnChangeReinitCallback<T>;
     proxyRef?: React.MutableRefObject<T>;
@@ -179,8 +179,9 @@ export class ProxyContextValueWrapper<T> {
     }
 }
 
-export function createProxyContextProvider<T extends object | null>(
-    contextClass: ProxyContext<T>
+export function createProxyContextProvider<T extends object | null, InputT = T>(
+    contextClass: ProxyContext<T>,
+    transformInput: (input: InputT) => T = (input) => input as unknown as T
 ) {
     return partialMemo(({
         children,
@@ -188,11 +189,11 @@ export function createProxyContextProvider<T extends object | null>(
         onChangeProp,
         onChangeReinit,
         proxyRef
-    }: ProxyContextProviderProps<T>) => {
+    }: ProxyContextProviderProps<T, InputT>) => {
         // The undefined value will be changed before the first render.
         const wrapperRef = useRef<ProxyContextValueWrapper<T> | undefined>(undefined);
         if (wrapperRef.current === undefined) {
-            wrapperRef.current = value instanceof ProxyContextValueWrapper ? value : new ProxyContextValueWrapper<T>(value);
+            wrapperRef.current = value instanceof ProxyContextValueWrapper ? value : new ProxyContextValueWrapper<T>(transformInput(value));
             onChangeReinit?.(wrapperRef.current.get(), value instanceof ProxyContextValueWrapper ? value.get() : undefined, true);
         }
 
@@ -229,12 +230,22 @@ export type UseProxyContextResult<T> = HookResultData<{
     set: (newObj: T) => T;
 }, readonly [T, (newObj: T) => T]>;
 
+export type UseProxyContextArgs<T> = [
+    ProxyContext<T>,
+    Dependency<T>[] | null,
+    OnChangePropCallback<T>,
+    OnChangeReinitCallback<T>,
+    boolean
+];
+
 export function useProxyContext<T>(
-    contextClass: ProxyContext<T>,
-    deps: Dependency<T>[] | null = [],
-    onChangeProp?: OnChangePropCallback<T>,
-    onChangeReinit?: OnChangeReinitCallback<T>,
-    listenReinit = true
+    ...[
+        contextClass,
+        deps,
+        onChangeProp,
+        onChangeReinit,
+        listenReinit = true
+    ]: UseProxyContextArgs<T>
 ): UseProxyContextResult<T> {
     const _context = useContext(contextClass);
 
