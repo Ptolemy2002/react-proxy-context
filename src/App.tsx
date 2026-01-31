@@ -1,4 +1,4 @@
-import { createProxyContext, createProxyContextProvider, useProxyContext } from "@ptolemy2002/react-proxy-context";
+import { createProxyContext, createProxyContextProvider, useProxyContext, createOnChangeReinit } from "@ptolemy2002/react-proxy-context";
 import { useState, useRef } from "react";
 
 type AppContextType = {
@@ -88,9 +88,9 @@ function Consumer({consumerKey}: {consumerKey: string}) {
         (prop, curr, prev) => {
             console.log("Consumer onChangeProp:", prop, curr, prev);
         },
-        (curr, prev) => {
+        createOnChangeReinit<AppContextType>((curr, prev) => {
             console.log("Consumer onChangeReinit:", curr, prev);
-        },
+        }),
         consumerKey.includes("1")
     );
     console.log("Consumer render");

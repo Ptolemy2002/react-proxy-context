@@ -5,12 +5,13 @@ import isCallable from "is-callable";
 import useForceRerender from "@ptolemy2002/react-force-rerender";
 import HookResult, {HookResultData} from "@ptolemy2002/react-hook-result";
 import { partialMemo } from "@ptolemy2002/react-utils";
-import { _ } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
 
 /*
     Proxies. Courtesy of StackOverflow:
     https://stackoverflow.com/a/7891968/7369908
 */
+
+type ArrayWithOptional<AR extends unknown[], AO extends unknown[]> = AR | [...AR, ...AO];
 
 export type ContextWithName<T> = Context<T> & { name: string };
 
@@ -230,18 +231,21 @@ export type UseProxyContextResult<T> = HookResultData<{
     set: (newObj: T) => T;
 }, readonly [T, (newObj: T) => T]>;
 
-export type UseProxyContextArgs<T> = [
-    ProxyContext<T>,
-    Dependency<T>[] | null,
-    OnChangePropCallback<T>,
-    OnChangeReinitCallback<T>,
-    boolean
-];
+export type UseProxyContextArgs<T> = ArrayWithOptional<
+    [ProxyContext<T>], ArrayWithOptional<
+        [Dependency<T>[] | null],
+        ArrayWithOptional<
+            [OnChangePropCallback<T>], ArrayWithOptional<
+                [OnChangeReinitCallback<T>], [boolean]
+            >
+        >
+    >
+>;
 
 export function useProxyContext<T>(
     ...[
         contextClass,
-        deps,
+        deps=[],
         onChangeProp,
         onChangeReinit,
         listenReinit = true
@@ -288,4 +292,16 @@ export function useProxyContext<T>(
         // The binding is necessary to fix a strange issue I'm having.
         { value: context.value.get(), set: context.value.set.bind(context.value) }, ["value", "set"]
     ) as UseProxyContextResult<T>;
+}
+
+export function createOnChangeReinit<T>(
+    f: OnChangeReinitCallback<T>
+): OnChangeReinitCallback<T> {
+    return f;
+}
+
+export function createOnChangeProp<T>(
+    f: OnChangePropCallback<T>
+): OnChangePropCallback<T> {
+    return f;
 }

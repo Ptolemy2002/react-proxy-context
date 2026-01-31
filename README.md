@@ -46,13 +46,21 @@ type UseProxyContextResult<T> = HookResultData<{
     set: (newObj: T) => T;
 }, readonly [T, (newObj: T) => T]>;
 
-type UseProxyContextArgs<T> = [
-    ProxyContext<T>,
-    Dependency<T>[] | null,
-    OnChangePropCallback<T>,
-    OnChangeReinitCallback<T>,
-    boolean
-];
+// ArrayWithOptional is internal
+type ArrayWithOptional<AR extends unknown[], AO extends unknown[]> = AR | [...AR, ...AO];
+
+type UseProxyContextArgs<T> = ArrayWithOptional<
+    [
+        ProxyContext<T>,
+    ], ArrayWithOptional<
+        [Dependency<T>[] | null],
+        ArrayWithOptional<
+            [OnChangePropCallback<T>], ArrayWithOptional<
+                [OnChangeReinitCallback<T>], [boolean]
+            >
+        >
+    >
+>;
 ```
 
 ## Classes
@@ -124,6 +132,23 @@ The component has the following props:
 - `onChangeProp` (`OnChangePropCallback<T>`): A function that is called whenever a property of the context is changed. The first parameter is the property that was changed, the second parameter is the current value of the property, and the third parameter is the previous value of the property. This is useful for listening to changes in the provider's parent component.
 - `onChangeReinit` (`OnChangeReinitCallback<T>`): A function that is called whenever the context is reinitialized. The first parameter is the current value of the context, the second parameter is the previous value of the context, and the third parameter is a boolean indicating whether this is the first initialization. Also called on first initialization, with the previous value being `undefined` if you passed in a raw value instead of a `ProxyContextValueWrapper`. This is useful for listening to changes in the provider's parent component.
 - `proxyRef` (`React.MutableRefObject<T>`): A ref object that is assigned the proxy object of the context. This is useful for accessing the proxy object directly by the provider's parent component.
+
+### createOnChangeProp<T>
+#### Description
+A helper function that creates an `OnChangePropCallback` function. This should never be necessary, but there are some cases where TypeScript cannot infer the type of the callback arguments correctly, so wrapping with this would make sense.
+
+#### Parameters
+- `f` (`OnChangePropCallback<T>`): The function to wrap.
+
+### createOnChangeReinit<T>
+#### Description
+A helper function that creates an `OnChangeReinitCallback` function. This should never be necessary, but there are some cases where TypeScript cannot infer the type of the callback arguments correctly, so wrapping with this would make sense.
+
+#### Parameters
+- `f` (`OnChangeReinitCallback<T>`): The function to wrap.
+
+#### Returns
+`OnChangeReinitCallback<T>` - The same function that was passed in.
 
 ## Hooks
 The following hooks are available in the library:
