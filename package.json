@@ -24,20 +24,19 @@
     "release-minor": "bash ./scripts/release.sh minor",
     "release-major": "bash ./scripts/release.sh major"
   },
-  "peerDependencies": {
+  "dependencies": {
     "@ptolemy2002/react-force-rerender": "^2.0.0",
     "@ptolemy2002/react-hook-result": "^2.1.1",
     "@ptolemy2002/react-utils": "^3.0.0",
     "is-callable": "^1.2.7",
-    "nanoid": "^5.0.7",
+    "nanoid": "^5.0.7"
+  },
+  "peerDependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
-    "@ptolemy2002/react-force-rerender": "^2.0.0",
-    "@ptolemy2002/react-hook-result": "^2.1.1",
-    "@ptolemy2002/react-utils": "^3.0.0",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -59,10 +58,8 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.12",
     "globals": "^15.9.0",
-    "is-callable": "^1.2.7",
     "jsdom": "^27.0.0",
     "less": "^4.2.0",
-    "nanoid": "^5.0.7",
     "path": "^0.12.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
